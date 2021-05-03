@@ -9042,6 +9042,7 @@ var ConnectionLine = (function (_ref) {
     return null;
   }
 
+  console.log('connectionline');
   var sourceHandle = handleId ? sourceNode.__rf.handleBounds[connectionHandleType].find(function (d) {
     return d.id === handleId;
   }) : sourceNode.__rf.handleBounds[connectionHandleType][0];
@@ -9053,6 +9054,12 @@ var ConnectionLine = (function (_ref) {
   var targetY = (connectionPositionY - transform[1]) / transform[2];
   var isRightOrLeft = (sourceHandle === null || sourceHandle === void 0 ? void 0 : sourceHandle.position) === Position.Left || (sourceHandle === null || sourceHandle === void 0 ? void 0 : sourceHandle.position) === Position.Right;
   var targetPosition = isRightOrLeft ? Position.Left : Position.Top;
+
+  if (!sourceHandle) {
+    console.log(sourceHandle, 'sourceHandle');
+    console.log('no source handle so returning');
+    return null;
+  }
 
   if (CustomConnectionLineComponent) {
     return /*#__PURE__*/React__default.createElement("g", {
@@ -10789,7 +10796,6 @@ function reactFlowReducer() {
   switch (action.type) {
     case TOGGLE_TARGET:
       {
-        console.log("in reducer");
         var targetNodeId = action.payload.nodeId;
         var handleBoundsId = action.payload.handleBoundsId;
         var nextNodes = state.nodes.reduce(function (res, node) {
@@ -10827,13 +10833,14 @@ function reactFlowReducer() {
                 return edge.target === targetNodeId && edge.targetHandle === foundHandleTarget.id;
               });
 
+              if (!node.__rf.handleBounds.source) node.__rf.handleBounds.source = [];
+
               if (!_connected) {
                 var targets = node.__rf.handleBounds.target.filter(function (target) {
                   return target.id !== handleBoundsId;
                 });
 
                 node.__rf.handleBounds.target = targets;
-                if (!node.__rf.handleBounds.source) node.__rf.handleBounds.source = [];
 
                 node.__rf.handleBounds.source.push(foundHandleTarget);
               }
