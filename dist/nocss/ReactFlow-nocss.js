@@ -2200,10 +2200,11 @@ var SET_MULTI_SELECTION_ACTIVE = 'SET_MULTI_SELECTION_ACTIVE';
 var SET_CONNECTION_MODE = 'SET_CONNECTION_MODE';
 var SET_NODE_EXTENT = 'SET_NODE_EXTENT';
 
-var setToggleTarget = function setToggleTarget(nodeId, handleBoundsId) {
+var setToggleTarget = function setToggleTarget(nodeId, handleBoundsId, elementBelow) {
   return createAction(TOGGLE_TARGET, {
     nodeId: nodeId,
-    handleBoundsId: handleBoundsId
+    handleBoundsId: handleBoundsId,
+    elementBelow: elementBelow
   });
 };
 var setOnConnect = function setOnConnect(onConnect) {
@@ -9071,7 +9072,6 @@ var ConnectionLine = (function (_ref) {
     return null;
   }
 
-  console.log('connectionline');
   var sourceHandle = handleId ? sourceNode.__rf.handleBounds[connectionHandleType].find(function (d) {
     return d.id === handleId;
   }) : sourceNode.__rf.handleBounds[connectionHandleType][0];
@@ -9085,8 +9085,6 @@ var ConnectionLine = (function (_ref) {
   var targetPosition = isRightOrLeft ? exports.Position.Left : exports.Position.Top;
 
   if (!sourceHandle) {
-    console.log(sourceHandle, 'sourceHandle');
-    console.log('no source handle so returning');
     return null;
   }
 
@@ -10818,6 +10816,12 @@ var getHandleBoundsByHandleType = function getHandleBoundsByHandleType(selector,
 function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$1(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+var toggleTargetClass = function toggleTargetClass(elementBelow) {
+  var elementBelowIsTarget = elementBelow === null || elementBelow === void 0 ? void 0 : elementBelow.classList.contains("target");
+  elementBelowIsTarget ? elementBelow === null || elementBelow === void 0 ? void 0 : elementBelow.classList.replace("target", "source") : elementBelow === null || elementBelow === void 0 ? void 0 : elementBelow.classList.replace("source", "target");
+};
+
 function reactFlowReducer() {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
   var action = arguments.length > 1 ? arguments[1] : undefined;
@@ -10827,15 +10831,12 @@ function reactFlowReducer() {
       {
         var targetNodeId = action.payload.nodeId;
         var handleBoundsId = action.payload.handleBoundsId;
+        var elementBelow = action.payload.elementBelow;
         var nextNodes = state.nodes.reduce(function (res, node) {
           if (node.id === targetNodeId) {
-            var foundHandleSource;
-
-            if (node.__rf.handleBounds.source) {
-              foundHandleSource = node.__rf.handleBounds.source.find(function (s) {
-                return s.id === handleBoundsId;
-              });
-            }
+            var foundHandleSource = node.__rf.handleBounds.source ? node.__rf.handleBounds.source.find(function (s) {
+              return s.id === handleBoundsId;
+            }) : false;
 
             var foundHandleTarget = node.__rf.handleBounds.target.find(function (s) {
               return s.id === handleBoundsId;
@@ -10848,6 +10849,8 @@ function reactFlowReducer() {
               });
 
               if (!connected) {
+                toggleTargetClass(elementBelow);
+
                 var sources = node.__rf.handleBounds.source.filter(function (source) {
                   return source.id !== handleBoundsId;
                 });
@@ -10862,9 +10865,11 @@ function reactFlowReducer() {
                 return edge.target === targetNodeId && edge.targetHandle === foundHandleTarget.id;
               });
 
-              if (!node.__rf.handleBounds.source) node.__rf.handleBounds.source = [];
+              node.__rf.handleBounds.source ? "" : node.__rf.handleBounds.source = [];
 
               if (!_connected) {
+                toggleTargetClass(elementBelow);
+
                 var targets = node.__rf.handleBounds.target.filter(function (target) {
                   return target.id !== handleBoundsId;
                 });
@@ -10879,53 +10884,9 @@ function reactFlowReducer() {
           res.push(node);
           return res;
         }, []);
-        console.log("no error in reducer");
         return _objectSpread$1(_objectSpread$1({}, state), {}, {
           nodes: nextNodes
-        }); // const targetNode = state.nodes.find((node) => node.id === targetNodeId);
-        // if (targetNode) {
-        //   const foundHandleSource = targetNode.__rf.handleBounds.source.find(
-        //     (s: { id: String | null }) => s.id === handleBoundsId
-        //   );
-        //   const foundHandleTarget = targetNode.__rf.handleBounds.target.find(
-        //     (s: { id: String | null }) => s.id === handleBoundsId
-        //   );
-        //   if (foundHandleSource) {
-        //     //check connections
-        //     const connected = state.edges.find(
-        //       (edge) =>
-        //         edge.source === targetNodeId &&
-        //         edge.sourceHandle === foundHandleSource.id
-        //     );
-        //     if (!connected) {
-        //       const sources = targetNode.__rf.handleBounds.source.filter(
-        //         (source: any) => source.id !== handleBoundsId
-        //       );
-        //       targetNode.__rf.handleBounds.source = sources;
-        //       targetNode.__rf.handleBounds.target.push(foundHandleSource);
-        //     }
-        //   } else if (foundHandleTarget) {
-        //     //check connections
-        //     const connected = state.edges.find(
-        //       (edge) =>
-        //         edge.target === targetNodeId &&
-        //         edge.targetHandle === foundHandleTarget.id
-        //     );
-        //     if (!connected) {
-        //       const targets = targetNode.__rf.handleBounds.target.filter(
-        //         (target: any) => target.id !== handleBoundsId
-        //       );
-        //       targetNode.__rf.handleBounds.target = targets;
-        //       targetNode.__rf.handleBounds.source.push(foundHandleTarget);
-        //     }
-        //   }
-        //   const nextNodes: Node[] = state.nodes.filter(
-        //     (node) => node.id !== targetNodeId
-        //   );
-        //   nextNodes.push(targetNode);
-        //   return { ...state, nodes: nextNodes };
-        // }
-        // return { ...state };
+        });
       }
 
     case SET_ELEMENTS:

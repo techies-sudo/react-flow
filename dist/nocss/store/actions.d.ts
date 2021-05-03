@@ -1,9 +1,10 @@
 import { Elements, OnConnectEndFunc, OnConnectFunc, OnConnectStartFunc, OnConnectStopFunc, NodeDimensionUpdate, NodePosUpdate, NodeDiffUpdate, XYPosition, Transform, Dimensions, InitD3ZoomPayload, TranslateExtent, SetConnectionId, SnapGrid, ConnectionMode, ElementId } from "../types";
-export declare const setToggleTarget: (nodeId: ElementId, handleBoundsId: String | null) => {
+export declare const setToggleTarget: (nodeId: ElementId, handleBoundsId: String | null, elementBelow: Element | null) => {
     type: "TOGGLE_TARGET";
     payload: {
         nodeId: string;
         handleBoundsId: String | null;
+        elementBelow: Element | null;
     };
 };
 export declare const setOnConnect: (onConnect: OnConnectFunc) => {
